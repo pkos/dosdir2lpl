@@ -11,17 +11,16 @@ my $substringh = "-h";
 #check command line
 foreach my $argument (@ARGV) {
   if ($argument =~ /\Q$substringh\E/) {
-    print "dosdir2lpl v0.5 - Generate RetroArch playlists from an unzipped DOS files directory scan. \n";
+    print "dosdir2lpl v0.6 - Generate RetroArch playlists from an unzipped DOS files directory scan. \n";
 	print "\n";
 	print "with dosdir2lpl [directory ...]";
     print "\n";
     print "Notes:\n";
-	print "  this calculates the crc32 values of each (.bat, .exe, .com) and these are added to the playlist";
+	print "  this calculates the crc32 values of each (.bat, .exe, .com) and these are added to the playlist\n";
 	print "  priority goes to batch files (skipping other executables) in each directory\n";
 	print "  if batch files are not found the executables will be added to the playlist\n";
 	print "\n";
 	print "  [directory] should be the path to the games folder, each game will be named after game subfolders\n";
-	print "              the command line must contain backslash symbols\n";
 	print "\n";
 	print "Example:\n";
 	print '              dosdir2lpl "D:/ROMS/DOS"' . "\n";
@@ -41,6 +40,7 @@ if (scalar(@ARGV) < 1 or scalar(@ARGV) > 1) {
   exit;
 }
 $directory = $ARGV[-1];
+$directory =~ s/\\/\//g;
 
 #debug
 print "directory: $directory\n";
@@ -61,7 +61,11 @@ my $playlist = "$system" . ".lpl";
 my $dirname = $directory;
 opendir(DIR, $dirname) or die "Could not open $dirname\n";
 while (my $filename = readdir(DIR)) {
-  push(@linesd, $filename) unless $filename eq '.' or $filename eq '..';
+  if (-d $filename) {
+    next;
+  } else {
+    push(@linesd, $filename) unless $filename eq '.' or $filename eq '..';
+  }
 }
 closedir(DIR);
 
@@ -121,7 +125,7 @@ HASH: foreach my $element (@linesd) {
 	    open (my $fh2, '<:raw', "$crcfilename") or die $!;
 	    $ctx->addfile(*$fh2);
         close $fh2;
-        $crc = $ctx->hexdigest;
+        $crc = uc $ctx->hexdigest;
       }
 	  #write file to playlist
 	  $path = '      "path": ' . '"' . "$crcfilename" . '",';
@@ -164,7 +168,7 @@ HASH: foreach my $element (@linesd) {
 	      open (my $fh2, '<:raw', "$crcfilename") or die $!;
 	      $ctx->addfile(*$fh2);
           close $fh2;
-          $crc = $ctx->hexdigest;
+          $crc = uc $ctx->hexdigest;
         }
 	    #write file to playlist
 	    $path = '      "path": ' . '"' . "$crcfilename" . '",';
